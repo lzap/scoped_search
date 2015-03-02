@@ -197,7 +197,7 @@ module ScopedSearch
       return complete_date_value if field.temporal?
       return complete_key_value(field, token, val) if field.key_field
 
-      opts = value_conditions(field.quoted_field, val)
+      opts = value_conditions(field, val)
       opts.merge!(:limit => 20, :select => "DISTINCT #{field.quoted_field}")
 
       return completer_scope(field).all(opts).map(&field.field).compact.map{|v| v.to_s =~ /\s+/ ? "\"#{v}\"" : v}
@@ -233,7 +233,7 @@ module ScopedSearch
     # complete values in a key-value schema
     def complete_key_value(field, token, val)
       key_name = token.sub(/^.*\./,"")
-      key_opts = value_conditions(field.quoted_field,val).merge(:conditions => {field.key_field => key_name})
+      key_opts = value_conditions(field,val).merge(:conditions => {field.key_field => key_name})
       key_klass = field.key_klass.first(key_opts)
       raise ScopedSearch::QueryNotSupported, "Field '#{key_name}' not recognized for searching!" if key_klass.nil?
 
@@ -250,7 +250,7 @@ module ScopedSearch
 
     #this method returns conditions for selecting completion from partial value
     def value_conditions(field_name, val)
-      return val.blank? ? {} : {:conditions => "#{field_name} LIKE '#{val.gsub("'","''")}%'".tr_s('%*', '%')}
+      return val.blank? ? {} : {:conditions => "CAST(#{field_name.quoted_field} AS CHAR(50)) LIKE '#{val.gsub("'","''")}%'".tr_s('%*', '%')}
     end
 
     # This method complete infix operators by field type
