@@ -35,7 +35,8 @@ ScopedSearch::RSpec::Database.test_databases.each do |db|
         has_many :bars
         default_scope { order(:string) }
 
-        scoped_search :on => [:string, :int, :date]
+        scoped_search :on => [:string, :date]
+        scoped_search :on => [:int], :complete_value => true
         scoped_search :on => :another,  :default_operator => :eq, :alias => :alias
         scoped_search :on => :explicit, :only_explicit => true, :complete_value => true
         scoped_search :on => :deprecated, :complete_enabled => false
@@ -212,6 +213,12 @@ ScopedSearch::RSpec::Database.test_databases.each do |db|
         Foo.complete_for('b').should have(4).items
       end
 
+    end
+
+    context 'autocompleting integer comparisons' do
+      it 'should autocomplete numerical fields' do
+        Foo.complete_for('int > 2').first.should match(/9/)
+      end
     end
   end
 end
